@@ -14,13 +14,12 @@ This is a fork of the [original AutoMan Visual Debugger](https://bitbucket.org/b
 It _almost_ goes without saying that you need a few build tools installed on your machine first, but having left these unmentioned before, I have been burned by irate programmers who claim that my software is "broken".  So, here we go.  You need:
 
 1. Git (for AutoMan source)
-2. Mercurial (for AVD source)
-3. Simple Build Tool (aka SBT)
+2. Simple Build Tool (aka SBT)
 
 If you're on a Mac and you have [Homebrew](http://brew.sh/), all you need to do is type:
 
 ```
-$ brew install git hg sbt
+$ brew install git sbt
 ```
 
 If you're not, see your local package manager documentation.
