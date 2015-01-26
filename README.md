@@ -2,6 +2,8 @@
 
 This repository is for the AutoMan Visual Debugger (AVD), a web interface designed to make debugging human-computational tasks easier.
 
+This is a fork of the [original AutoMan Visual Debugger](https://bitbucket.org/btamaskar/automan-debugger) project, which was the subject of Bianca Tamaskar's independent study.
+
 ### What is the AutoMan Visual Debugger? ###
 
 * This repository houses the two components of AVD: a 1) plugin implementation (an embedded web server built on [spray](http://spray.io/)) and 2) a JavaScript web UI.
@@ -44,8 +46,8 @@ You should probably also explicitly reference AutoMan:
 3. AutoMan presently needs the changes in the `webdebugger` branch: `$ git checkout webdebugger`
 3. `$ sbt "project automan" publish-local`
 4. `$ cd ..`
-5. `$ hg clone ssh://hg@bitbucket.org/btamaskar/automan-debugger`
-6. `$ cd automan-debugger`
+5. Checkout a copy of [DebugMan](https://github.com/dbarowy/DebugMan): `$ git clone git@github.com:dbarowy/DebugMan.git`
+6. `$ cd DebugMan`
 7. `$ sbt publish-local`
 
 Your own code may now use locally-published AutoMan and AVD JARs.
@@ -128,17 +130,17 @@ Modifying AVD requires you to use the following procedure:
 
 1. Make a change in the AVD source code.
 2. Ensure that the change compiles (e.g., run `sbt compile`).
-3. Publish the changes locally: `cd automan-debugger; sbt publish-local`.
+3. Publish the changes locally: `cd DebugMan; sbt publish-local`.
 4. Recompile and run your code.  If you're using `SimpleProgram` as a test as above, you can just `run` the code again; SBT will pickup the new changes.  Alternately, if you're using IntelliJ IDEA with the SBT and Scala plugins, you can just run your code again.
 
 ### Contributing ###
 
-If you're not Bianca or Dan, send us a Pull Request.
+If you're not Dan, send me a Pull Request.
 
 ### Who do I talk to? ###
 
 * If you find bugs, please open an Issue in this repository.
-* AVD is currently maintained by Bianca Tamaskar, with some help from Daniel Barowy.
+* AVD is currently maintained by Daniel Barowy.
 
 ### Acknowledgements ###
 
