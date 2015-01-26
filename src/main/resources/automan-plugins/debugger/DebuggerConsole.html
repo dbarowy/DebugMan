@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<title>AutoMan Visual Debugger Title</title>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/highcharts.js"></script>
+<script src="js/exporting.js"></script>
+<script src="js/jquery-ui.min.js"></script>
+
+<link rel="stylesheet" href="css/jquery-ui.css">
+
+<script>
+    var saveAnswerNum;
+    var saveTimeoutNum;
+    var num;
+
+    function processArgs(query){
+        ARGS = {};
+        var param = query.split("&");
+        for (var i = 0; i < param.length; i++) {
+            var pair = param[i].split("=");
+            ARGS[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+        }
+        return ARGS;
+    }
+    
+    function currentPath() {
+      return document.URL.substring(0, document.URL.lastIndexOf('/')+1);
+    }
+
+    function formatTime(time){
+        var d = new Date(time);
+        return "<i>" + d.toUTCString() + "</i>";
+    }
+
+    function printInfo(data, number) {
+        $("#info_para").append(
+                        "<b>Task Name: " + "<u>" + data.tasks[number].info.task_name + "</u>" + "<br>" +
+                        "Question: " + data.tasks[number].info.task_question + "</b><br>" +
+                        "Description: " + data.tasks[number].info.task_description + "<br>" +
+                        "Type: " + data.tasks[number].info.task_type + "<br>" +
+                        "Start Time: " + formatTime(data.tasks[number].info.start_time) + "<br>" +
+                        "Desired Confidence Level: " + data.tasks[number].info.confidence_level + "<br>" +
+                        "Average Task Time (sec): " + data.tasks[number].info.avg_task_time_sec + "<br>" +
+                        "Average Time for Similar Tasks (sec): " + data.tasks[number].info.avg_time_similar_tasks_sec + "<br>"
+        );
+    }
+
+    function printTimeouts(data, number) {
+        $.each(data.tasks[number].prev_timeouts, function(index, prevtimeout){
+            $("#prevtimeout_para").append(
+                            "<b> Timeout #: " + prevtimeout.timeout_num + "</b><br>" +
+                            "Time: " + formatTime(prevtimeout.timeout_time) + "<br>" +
+                            "Identical Answers Received: " + prevtimeout.identical_ans_received + "<br>" +
+                            "Identical Answers Needed: " + prevtimeout.identical_ans_shortage + "<br><br>"
+            );
+
+        });
+        return data.tasks[number].prev_timeouts.length;
+    }
+
+    function printCurrentTasks(data, number){
+        $.each(data.tasks[number].current_tasks, function(index, answer){
+            $("#task_para").append(
+                            "<b>Answer #: " + answer.answer_num + "</b><br>" +
+                            "Time Answered: " + formatTime(answer.time_answered) + "<br>" +
+                            "Answer Received: " + answer.answer + "<br><br>"
+            );
+        });
+        return data.tasks[number].current_tasks.length;
+    }
+
+    function printBudget(data, number){
+        $("#budget_para").append(
+                        "Payout per task: $" + data.tasks[number].budget_info.payout_per_task_usd + "<br>" +
+                        "Universal Budget: $" + data.tasks[number].budget_info.universal_budget_usd + "<br>" +
+                        "Task Budget: $" + data.tasks[number].budget_info.task_budget_usd + "<br>" +
+                        "Budget Used: $" + data.tasks[number].budget_info.budget_used + "<br>" +
+                        "Budget Remaining: $" + data.tasks[number].budget_info.budget_remaining
+        );
+    }
+
+    function addAnswer(data, number){
+
+        //create an array of answers
+        var answers = [];
+        $.each(data.tasks[number].current_tasks, function(index, answer){
+            answers[index] = answer;
+        });
+
+        //append new answers to task_para
+        if(answers[answers.length-1].answer_num > saveAnswerNum) {
+            $("#task_para").append(
+                            "<b>Answer #: " + answers[answers.length-1].answer_num + "</b><br>" +
+                            "Time Answered: " + formatTime(answers[answers.length-1].time_answered) + "<br>" +
+                            "Answer Received: " + answers[answers.length-1].answer + "<br><br>"
+            );
+            saveAnswerNum++;
+        }
+    }
+
+    function addTimeout(data, number){
+        //create an array of timeouts
+        var timeouts = [];
+        $.each(data.tasks[number].prev_timeouts, function(index, timeout){
+            timeouts[index] = timeout;
+        });
+
+        //append new timeouts to prevtimeout_para
+        if(timeouts[timeouts.length-1].timeout_num > saveTimeoutNum) {
+            $("#prevtimeout_para").append(
+                            "<b> Timeout #: " + timeouts[timeouts.length-1].timeout_num + "</b><br>" +
+                            "Time: " + formatTime(timeouts[timeouts.length-1].timeout_time) + "<br>" +
+                            "Identical Answers Received: " + timeouts[timeouts.length-1].identical_ans_received + "<br>" +
+                            "Identical Answers Needed: " + timeouts[timeouts.length-1].identical_ans_shortage + "<br><br>"
+            );
+            saveTimeoutNum++;
+        }
+    }
+
+    function draw_progressbar(data, number) {
+        var used = data.tasks[number].budget_info.budget_used;
+        var btotal = data.tasks[number].budget_info.task_budget_usd;
+        $( "#progressbar" ).progressbar({
+            value: ((used / btotal) * 100)
+        });
+    }
+
+    function update_pie(data, number){
+        var completed = data.tasks[number].info.answers_received;
+        var total = data.tasks[number].info.total_answers_needed;
+        var newdata = [
+            ['Completed', (completed / total * 100)],
+            ['Not <br> Completed', ((1 - (completed / total)) * 100)]
+
+        ];
+        var chart = $('#container').highcharts();
+        chart.series[0].setData(newdata, true);
+    }
+
+    function draw_pie (data, number) {
+        var completed = data.tasks[number].info.answers_received;
+        var total = data.tasks[number].info.total_answers_needed;
+
+        $('#container').highcharts({
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: 0,//null,
+                plotShadow: false
+                //animation: false,
+                //width: 400
+            },
+            title: {
+                text: 'Task Completion'
+            },
+            tooltip: {
+                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    animation: false,
+                    minSize: 150
+                }
+            },
+            series: [
+                {
+                    type: 'pie',
+                    name: 'Status',
+                    data: [
+                        ['Completed', (completed / total * 100)],
+                        ['Not <br> Completed', ((1 - (completed / total)) * 100)]
+
+                    ]
+                }
+            ]
+        });
+    }
+
+    $(document).ready(function() {
+        $.getJSON(currentPath() + "data", function(data){
+            var ARGS = processArgs(window.location.search.substring(1));
+            num = ARGS.tasknumber;
+            printInfo(data, num);
+
+            if(data.tasks[num].current_tasks.length > 0){
+                saveAnswerNum = data.tasks[num].current_tasks.length-1;
+            }
+            else{ saveAnswerNum = -1; }
+
+            if(data.tasks[num].prev_timeouts.length > 0){
+                saveTimeoutNum = data.tasks[num].prev_timeouts.length-1;
+            }
+            else{ saveTimeoutNum = -1; }
+
+            printTimeouts(data, num);
+            printCurrentTasks(data, num);
+            printBudget(data, num);
+            draw_pie(data, num);
+            draw_progressbar(data, num);
+        });
+    });
+
+    function update_info() {
+        //$("#debug").text(++debugcounter);
+        $.getJSON(currentPath() + "data", function (data) {
+
+            if(data.tasks[num].budget_info.budget_remaining == 0){
+                alert("You have spent all of your budget!");
+            }
+
+            //add any new answers or timeouts.
+            addAnswer(data, num);
+            addTimeout(data, num);
+
+            //update according to changes in JSON
+            $("#info_para").empty();
+            printInfo(data, num);
+            $("#budget_para").empty();
+            printBudget(data, num);
+
+            //update widgets.
+            update_pie(data, num);
+            draw_progressbar(data, num);
+
+            //$("#debug").text(++debugcounter);
+        });
+    }
+
+    setInterval(update_info, 10000);
+</script>
+</head>
+
+
+<body bgcolor = "#FFFFFF">
+<p id = "debug"></p>
+<!--<h1 style="text-align: center"><font face = "arial">AutoMan Visual Debugger</font></h1>-->
+<hr color="#B0E0E6">
+<font face = "arial" size = 2>
+
+    <div id="column1" style="float:left; margin:0; width:33%;">
+        <h1 style="text-align: center">General Information</h1>
+        <p id="info_para" style="text-align: left"></p>
+        <h2 style="text-align: center">Previous Timeouts</h2>
+        <p id="prevtimeout_para" style="text-align: left"></p>
+
+    </div>
+
+    <div id="column2" style="float:left; margin:0;width:33%;">
+        <h1 style="text-align: center">Answers</h1>
+        <p id="task_para" style="text-align: left">
+        </p>
+        <div id="container" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+        <br><br><br>
+
+        </p>
+    </div>
+
+    <div id="column3" style="float:left; margin:0;width:33%">
+        <h1 style="text-align: center">Budget</h1>
+        <p id="budget_para" style="text-align: left"></p>
+        <div id = "progressbar"></div>
+
+    </div>
+</font>
+</body>
+</html>

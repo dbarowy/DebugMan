@@ -1,0 +1,53 @@
+//array of task objects
+"tasks": [tasks]
+
+{
+    "tasks":[
+
+    {
+        "info": {
+            "task_name": string,
+            "task_question": RadioButtonQuestion|,
+            "task_description": string,
+            "task_type": string,
+            "start_time": time,
+            "confidence_level": float,
+            "avg_task_time_sec": int,
+            "avg_time_similar_tasks_sec": int,
+            "answers_received": int,
+            "total_answers_needed": int
+
+        },
+
+        //array of previous timeouts
+        "prev_timeouts": [
+            {
+                "timeout_num": int,
+                "timeout_time": time,
+                "identical_ans_received": int,
+                "identical_ans_shortage": int
+
+            }
+
+        ],
+
+        //array of tasks
+        "current_tasks": [
+            {
+                "answer_num": int,
+                "time_answered": time,
+                "answer": string
+            }
+        ],
+
+        "budget_info": {
+            "payout_per_task_usd": float,
+            "universal_budget_usd": float,
+            "task_budget_usd": float,
+            "budget_used": float,
+            "budget_remaining": float
+
+        }
+    }
+]
+}

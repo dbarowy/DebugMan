@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+  <html>
+  <head>
+      <meta charset="UTF-8">
+      <script src="js/jquery.min.js"></script>
+
+      <script>
+
+          var taskCount = 0;
+          var taskArray = [];
+          var saveIndex = 0;
+
+          function currentPath() {
+            return document.URL.substring(0, document.URL.lastIndexOf('/')+1);
+          }
+
+          function displayTaskCount(){
+              if(taskCount != 1) {
+                  $("#task_count").append("You currently have " + taskCount + " tasks running.");
+              }
+              else{
+                  $("#task_count").append("You currently have " + taskCount + " task running.");
+              }
+          }
+
+          function displayTaskNames(data){
+              $.each(data.tasks, function(index, task) {
+                  var linkScan = "task_" + index;
+                  $("#nav").append("<span id =\"" + linkScan + "\"><a href=\"" + currentPath() + "task?tasknumber=" + index +  "\" target = \"iframe_1\">"
+                          + data.tasks[index].info.task_name + "</a></span><br>");
+                  taskArray[index] = data.tasks[index].info.task_name;
+                  taskCount++;
+              });
+          }
+
+          function displayFormInputOptions(data){
+              $.each(data.tasks, function(index, task) {
+                  $("#tasksList").append("<option value=" + data.tasks[index].info.task_name + ">");
+              });
+          }
+
+          function validateForm() {
+              var x = document.forms["form"]["search"].value;
+              if (x == null || x == "") {
+                  alert("You did not enter a task name");
+                  return false;
+              }
+              for(var i=0; i<taskArray.length; i++){
+                  if(taskArray[i] == x){
+                      saveIndex = i;
+                      return true;
+                  }
+              }
+              alert("Not a valid task name");
+              return false;
+          }
+
+          function checkForMatches() {
+              var hidden = [];
+              var substring = document.forms["form"]["search"].value;
+              var re = new RegExp(substring, 'i');
+              var counter = 0;
+
+              $.getJSON(currentPath() + "data", function(data){
+                  $.each(data.tasks, function(index, task) {
+                      var check = task.info.task_name.match(re);
+                      if (check == null) {
+                          hidden[counter] = index;
+                          counter++;
+                      }
+                  });
+              });
+              hideTasks(hidden);
+          }
+
+          function hideTasks(hidden){setTimeout(
+               function(){
+                  for(var i = 0; i < hidden.length; i++){
+                      var hide_element = $("#task_" + hidden[i]);
+                      hide_element.hide();
+                  }
+               }, 400);
+          }
+
+          function displaySelectedTask(){
+              if (validateForm()){
+                  $("#iframe_section").empty();
+                  //alert("emptied");
+                  $("#iframe_section").append(
+                    " <iframe width = \"1100px\" height = \"1000px\" src=\"" + currentPath() + "task?tasknumber="
+                    + saveIndex +
+                    "\" name = \"iframe_1\"></iframe>) "
+                  );
+                  alert(saveIndex);
+              }
+          }
+
+          $.getJSON(currentPath() + "data", function(data) {
+              displayTaskNames(data);
+              displayTaskCount();
+              displayFormInputOptions(data);
+          });
+
+      </script>
+
+      <style>
+          #header {
+              background-color:black;
+              color:white;
+              text-align:center;
+              padding:5px;
+              font-family: "Arial";
+          }
+          #nav {
+              line-height:30px;
+              background-color:#eeeeee;
+              height:1050px;
+              width:130px;
+              float:left;
+              padding:5px;
+              font-family: "Arial";
+              overflow: scroll;
+              font-size: small;
+          }
+          #iframe_section {
+              width:800px;
+              float:left;
+              padding:10px;
+              font-family: "Arial";
+              font-size: small;
+          }
+          #footer {
+              background-color:black;
+              color:white;
+              clear:both;
+              text-align:center;
+              padding:5px;
+              font-family: "Arial";
+          }
+          #task_count{
+              text-align: center;
+              font-size: small;
+          }
+
+      </style>
+  </head>
+  <body>
+
+  <div id="header">
+      <h1>AutoMan Visual Debugger<br>HOME</h1>
+  </div>
+
+  <div id="nav">
+      <form name = "form" onkeyup="checkForMatches()">
+          <input list ="tasksList" name="search" placeholder="Search..." size=16>
+          <datalist id="tasksList">
+              <!--append task names here-->
+          </datalist>
+      </form>
+      <p id = task_count></p>
+  </div>
+
+  <div id="iframe_section">
+      Welcome! Search for a task you would like to learn more about or select one from the menu on the left.<br><br>
+          <!--<iframe width = "1100x" height = "1000px" src="http://localhost:63342/AutoMan%20Visual%20Debugger/repo/DebuggerConsole.html?tasknumber=0" name = "iframe_1"></iframe>-->
+      <iframe width = "1100x" height = "1000px" name = "iframe_1"></iframe>
+
+  </div>
+
+  <div id="footer">
+      Copyright © W3Schools.com
+  </div>
+
+  </body>
+</html>
